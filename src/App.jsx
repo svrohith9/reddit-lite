@@ -67,8 +67,8 @@ function App() {
     }
 
     setSubforums(data || [])
-    if (!selectedSubforumId && data?.length) {
-      setSelectedSubforumId(data[0].id)
+    if (selectedSubforumId && !(data || []).some((sf) => sf.id === selectedSubforumId)) {
+      setSelectedSubforumId('')
     }
   }, [selectedSubforumId, user])
 
@@ -303,7 +303,7 @@ function App() {
             placeholder="Search posts by title or body"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            disabled={!user}
+            disabled={!user || !selectedSubforumId}
           />
         </div>
       </section>
@@ -479,6 +479,8 @@ function App() {
 
         {!user ? (
           <p className="muted">Sign in to view and join threads.</p>
+        ) : !selectedSubforumId ? (
+          <p className="muted">Choose a subforum to view its posts.</p>
         ) : fetchError ? (
           <p className="error">{fetchError}</p>
         ) : !loading && visiblePosts.length === 0 ? (
