@@ -33,6 +33,7 @@ npm run dev
 3) Push to `main`; workflow `.github/workflows/deploy.yml` builds with secrets and deploys to Pages.
 4) To trigger manually: GitHub → Actions → Deploy to GitHub Pages → Run workflow.
 5) Local deploy (optional): `npm run deploy` (requires `.env`).
+6) If the deploy is blocked by environment protection, approve the `github-pages` environment in Actions or loosen the environment rules, then re-run the workflow.
 
 ## Environment
 - `.env` is ignored; never commit keys.
