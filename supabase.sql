@@ -20,16 +20,16 @@ alter table comments enable row level security;
 
 do $$
 begin
-  if not exists (select 1 from pg_policies where polname = 'Public read posts') then
+  if not exists (select 1 from pg_policies where policyname = 'Public read posts') then
     create policy "Public read posts" on posts for select using (true);
   end if;
-  if not exists (select 1 from pg_policies where polname = 'Public insert posts') then
+  if not exists (select 1 from pg_policies where policyname = 'Public insert posts') then
     create policy "Public insert posts" on posts for insert with check (true);
   end if;
-  if not exists (select 1 from pg_policies where polname = 'Public read comments') then
+  if not exists (select 1 from pg_policies where policyname = 'Public read comments') then
     create policy "Public read comments" on comments for select using (true);
   end if;
-  if not exists (select 1 from pg_policies where polname = 'Public insert comments') then
+  if not exists (select 1 from pg_policies where policyname = 'Public insert comments') then
     create policy "Public insert comments" on comments for insert with check (true);
   end if;
 end $$;
