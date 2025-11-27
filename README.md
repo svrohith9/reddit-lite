@@ -9,10 +9,13 @@ cp .env.example .env   # fill VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY
 npm run dev
 ```
 
-## Supabase setup
+## Supabase setup (auth + data)
 1) Create a Supabase project and grab the anon key + URL (paste into `.env`).
-2) Run `supabase.sql` in the SQL editor to create tables, enable RLS, and add public read/insert policies.
-3) Test locally (`npm run dev`) and create a post/comment.
+2) Run `supabase.sql` in the SQL editor to create tables (posts/comments), add user columns, enable RLS, and add authenticated insert policies.
+3) Enable OAuth providers you want (Auth → Providers → Google/Apple) and configure redirect URLs:
+   - Local dev: `http://localhost:5173/`
+   - GitHub Pages: `https://svrohith9.github.io/reddit-lite/`
+4) Test locally (`npm run dev`) and create a post/comment after signing in.
 
 ## Deploy to GitHub Pages
 ```bash

@@ -173,3 +173,63 @@
   color: #64748b;
   margin: 0;
 }
+
+.secondary {
+  background: #fff;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.wide {
+  width: 100%;
+}
+
+.auth-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.social-row {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.auth-tabs {
+  display: inline-flex;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.auth-tabs button {
+  border: none;
+  background: #f8fafc;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.auth-tabs button.active {
+  background: #2563eb;
+  color: #fff;
+}
+
+.error {
+  color: #b91c1c;
+  margin: 0;
+  font-weight: 600;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #cbd5e1;
+}
+
+.dot.online {
+  background: #22c55e;
+}
