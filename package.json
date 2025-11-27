@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://YOUR_GH_USER.github.io/reddit-lite",
+  "homepage": "https://svrohith9.github.io/reddit-lite",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
