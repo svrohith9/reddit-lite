@@ -97,6 +97,9 @@ begin
   if not exists (select 1 from pg_policies where policyname = 'Authenticated read comment_history') then
     create policy "Authenticated read comment_history" on comment_history for select using (auth.role() = 'authenticated');
   end if;
+  if not exists (select 1 from pg_policies where policyname = 'Authenticated insert comment_history') then
+    create policy "Authenticated insert comment_history" on comment_history for insert with check (auth.role() = 'authenticated');
+  end if;
 end $$;
 
 create index if not exists comments_post_id_idx on comments(post_id);
