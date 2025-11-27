@@ -41,11 +41,24 @@ create table if not exists comment_history (
   user_email text
 );
 
+create table if not exists posts_history (
+  id uuid default uuid_generate_v4() primary key,
+  post_id uuid not null,
+  title text,
+  body text,
+  action text not null, -- insert, update, delete
+  subforum_id uuid,
+  user_id uuid,
+  user_email text,
+  changed_at timestamp with time zone default now()
+);
+
 -- Enable RLS and add permissive policies for anon reads/inserts
 alter table posts enable row level security;
 alter table comments enable row level security;
 alter table sub_forums enable row level security;
 alter table comment_history enable row level security;
+alter table posts_history enable row level security;
 
 do $$
 begin
@@ -100,10 +113,18 @@ begin
   if not exists (select 1 from pg_policies where policyname = 'Authenticated insert comment_history') then
     create policy "Authenticated insert comment_history" on comment_history for insert with check (auth.role() = 'authenticated');
   end if;
+  if not exists (select 1 from pg_policies where policyname = 'Authenticated read posts_history') then
+    create policy "Authenticated read posts_history" on posts_history for select using (auth.role() = 'authenticated');
+  end if;
+  if not exists (select 1 from pg_policies where policyname = 'Authenticated insert posts_history') then
+    create policy "Authenticated insert posts_history" on posts_history for insert with check (auth.role() = 'authenticated');
+  end if;
 end $$;
 
 create index if not exists comments_post_id_idx on comments(post_id);
 create index if not exists posts_subforum_id_idx on posts(subforum_id);
+create index if not exists posts_history_post_id_idx on posts_history(post_id);
+create index if not exists comment_history_comment_id_idx on comment_history(comment_id);
 
 create or replace function set_updated_at_posts()
 returns trigger as $$
@@ -125,8 +146,41 @@ create or replace function log_comment_history()
 returns trigger as $$
 begin
   insert into comment_history (comment_id, body, action, user_id, user_email, changed_at)
-  values (coalesce(old.id, new.id), coalesce(old.body, new.body), tg_op = 'DELETE'::text ? 'delete' : 'update', coalesce(old.user_id, new.user_id), coalesce(old.user_email, new.user_email), now());
-  return new;
+  values (
+    coalesce(old.id, new.id),
+    coalesce(new.body, old.body),
+    case
+      when tg_op = 'INSERT' then 'insert'
+      when tg_op = 'DELETE' then 'delete'
+      else 'update'
+    end,
+    coalesce(new.user_id, old.user_id),
+    coalesce(new.user_email, old.user_email),
+    now()
+  );
+  return coalesce(new, old);
+end;
+$$ language plpgsql;
+
+create or replace function log_posts_history()
+returns trigger as $$
+begin
+  insert into posts_history (post_id, title, body, action, subforum_id, user_id, user_email, changed_at)
+  values (
+    coalesce(old.id, new.id),
+    coalesce(new.title, old.title),
+    coalesce(new.body, old.body),
+    case
+      when tg_op = 'INSERT' then 'insert'
+      when tg_op = 'DELETE' then 'delete'
+      else 'update'
+    end,
+    coalesce(new.subforum_id, old.subforum_id),
+    coalesce(new.user_id, old.user_id),
+    coalesce(new.user_email, old.user_email),
+    now()
+  );
+  return coalesce(new, old);
 end;
 $$ language plpgsql;
 
@@ -137,5 +191,9 @@ drop trigger if exists trg_comments_updated_at on comments;
 create trigger trg_comments_updated_at before update on comments for each row execute function set_updated_at_comments();
 
 drop trigger if exists trg_comments_history on comments;
-create trigger trg_comments_history before update or delete on comments
+create trigger trg_comments_history after insert or update or delete on comments
 for each row execute function log_comment_history();
+
+drop trigger if exists trg_posts_history on posts;
+create trigger trg_posts_history after insert or update or delete on posts
+for each row execute function log_posts_history();
