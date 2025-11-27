@@ -24,6 +24,8 @@ function App() {
   const [authForm, setAuthForm] = useState({ email: '', password: '' })
   const [authError, setAuthError] = useState('')
   const [authLoading, setAuthLoading] = useState(false)
+  const [postError, setPostError] = useState('')
+  const [commentError, setCommentError] = useState({})
 
   const sortedPosts = useMemo(
     () => [...posts].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)),
@@ -89,6 +91,7 @@ function App() {
   const createPost = async () => {
     if (!user || !newPost.title.trim()) return
     setSavingPost(true)
+    setPostError('')
     const { data, error } = await supabase
       .from('posts')
       .insert({
@@ -102,9 +105,11 @@ function App() {
 
     if (error) {
       console.error('Error creating post', error)
+      setPostError(error.message || 'Unable to create post')
     } else if (data) {
       setPosts([data, ...posts])
       setNewPost({ title: '', body: '' })
+      setPostError('')
     }
     setSavingPost(false)
   }
@@ -114,6 +119,7 @@ function App() {
     if (!body || !user) return
 
     setSavingComment((prev) => ({ ...prev, [postId]: true }))
+    setCommentError((prev) => ({ ...prev, [postId]: '' }))
     const { data, error } = await supabase
       .from('comments')
       .insert({ post_id: postId, body, user_id: user.id, user_email: user.email })
@@ -122,21 +128,16 @@ function App() {
 
     if (error) {
       console.error('Error creating comment', error)
+      setCommentError((prev) => ({ ...prev, [postId]: error.message || 'Unable to comment' }))
     } else if (data) {
       setComments((prev) => ({
         ...prev,
         [postId]: [...(prev[postId] || []), data],
       }))
       setNewComment((prev) => ({ ...prev, [postId]: '' }))
+      setCommentError((prev) => ({ ...prev, [postId]: '' }))
     }
     setSavingComment((prev) => ({ ...prev, [postId]: false }))
-  }
-
-  const signInWithProvider = async (provider) => {
-    setAuthError('')
-    const redirectTo = `${window.location.origin}${window.location.pathname}`
-    const { error } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo } })
-    if (error) setAuthError(error.message)
   }
 
   const handleEmailAuth = async () => {
@@ -201,14 +202,6 @@ function App() {
 
         {!user ? (
           <div className="auth-grid">
-            <div className="social-row">
-              <button className="secondary wide" onClick={() => signInWithProvider('google')}>
-                Continue with Google
-              </button>
-              <button className="secondary wide" onClick={() => signInWithProvider('apple')}>
-                Continue with Apple
-              </button>
-            </div>
             <div className="auth-tabs">
               <button
                 className={authMode === 'signup' ? 'active' : ''}
@@ -291,6 +284,7 @@ function App() {
             <button className="primary" onClick={createPost} disabled={savingPost}>
               {savingPost ? 'Posting…' : 'Publish post'}
             </button>
+            {postError && <p className="error">{postError}</p>}
           </>
         )}
       </section>
@@ -349,6 +343,7 @@ function App() {
                       >
                         {savingComment[post.id] ? 'Posting…' : 'Send'}
                       </button>
+                      {commentError[post.id] && <p className="error">{commentError[post.id]}</p>}
                     </div>
                   ) : (
                     <p className="muted">Sign in to comment.</p>
