@@ -15,15 +15,10 @@ npm run dev
 3) Test locally (`npm run dev`), sign up/sign in with email/password, then create a subforum, post, and comment.
 
 ## Deploy to GitHub Pages
-```bash
-# set homepage to your user
-node -e "const fs=require('fs');const p=require('./package.json');p.homepage='https://YOUR_GH_USER.github.io/reddit-lite';fs.writeFileSync('package.json',JSON.stringify(p,null,2));"
-git add package.json && git commit -m "chore: set homepage"
-
-git remote add origin https://github.com/YOUR_GH_USER/reddit-lite.git
-git push -u origin main
-npm run deploy  # pushes dist to gh-pages
-```
+1) Set repo secrets in GitHub: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
+2) Ensure Pages is configured to use GitHub Actions.
+3) Push to `main`; the workflow `.github/workflows/deploy.yml` will build with secrets and deploy to Pages.
+4) Local deploy (optional): `npm run deploy` (requires `.env` locally).
 
 ## Notes
 - `.env` is ignored; keep your anon key out of git.
