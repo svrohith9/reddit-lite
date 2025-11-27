@@ -1,16 +1,30 @@
-# React + Vite
+# Reddit Lite (Vite + React + Supabase)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Simple thread + comment app with a Supabase backend and static hosting on GitHub Pages.
 
-Currently, two official plugins are available:
+## Quick start
+```bash
+npm install
+cp .env.example .env   # fill VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY
+npm run dev
+```
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Supabase setup
+1) Create a Supabase project and grab the anon key + URL (paste into `.env`).
+2) Run `supabase.sql` in the SQL editor to create tables, enable RLS, and add public read/insert policies.
+3) Test locally (`npm run dev`) and create a post/comment.
 
-## React Compiler
+## Deploy to GitHub Pages
+```bash
+# set homepage to your user
+node -e "const fs=require('fs');const p=require('./package.json');p.homepage='https://YOUR_GH_USER.github.io/reddit-lite';fs.writeFileSync('package.json',JSON.stringify(p,null,2));"
+git add package.json && git commit -m "chore: set homepage"
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+git remote add origin https://github.com/YOUR_GH_USER/reddit-lite.git
+git push -u origin main
+npm run deploy  # pushes dist to gh-pages
+```
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Notes
+- `.env` is ignored; keep your anon key out of git.
+- If you prefer stricter access, replace the permissive RLS policies with auth-aware checks.
