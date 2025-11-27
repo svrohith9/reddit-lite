@@ -30,17 +30,23 @@ begin
   if exists (select 1 from pg_policies where policyname = 'Public insert comments') then
     drop policy "Public insert comments" on comments;
   end if;
-  if not exists (select 1 from pg_policies where policyname = 'Public read posts') then
-    create policy "Public read posts" on posts for select using (true);
+  if exists (select 1 from pg_policies where policyname = 'Public read posts') then
+    drop policy "Public read posts" on posts;
   end if;
   if not exists (select 1 from pg_policies where policyname = 'Authenticated insert posts') then
     create policy "Authenticated insert posts" on posts for insert with check (auth.uid() = user_id);
   end if;
-  if not exists (select 1 from pg_policies where policyname = 'Public read comments') then
-    create policy "Public read comments" on comments for select using (true);
+  if not exists (select 1 from pg_policies where policyname = 'Authenticated read posts') then
+    create policy "Authenticated read posts" on posts for select using (auth.role() = 'authenticated');
+  end if;
+  if exists (select 1 from pg_policies where policyname = 'Public read comments') then
+    drop policy "Public read comments" on comments;
   end if;
   if not exists (select 1 from pg_policies where policyname = 'Authenticated insert comments') then
     create policy "Authenticated insert comments" on comments for insert with check (auth.uid() = user_id);
+  end if;
+  if not exists (select 1 from pg_policies where policyname = 'Authenticated read comments') then
+    create policy "Authenticated read comments" on comments for select using (auth.role() = 'authenticated');
   end if;
 end $$;
 

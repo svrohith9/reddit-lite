@@ -26,6 +26,7 @@ function App() {
   const [authLoading, setAuthLoading] = useState(false)
   const [postError, setPostError] = useState('')
   const [commentError, setCommentError] = useState({})
+  const [fetchError, setFetchError] = useState('')
 
   const sortedPosts = useMemo(
     () => [...posts].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)),
@@ -33,7 +34,14 @@ function App() {
   )
 
   const fetchData = useCallback(async () => {
+    if (!user) {
+      setPosts([])
+      setComments({})
+      setFetchError('')
+      return
+    }
     setLoading(true)
+    setFetchError('')
     const { data: postRows, error: postError } = await supabase
       .from('posts')
       .select('*')
@@ -41,6 +49,7 @@ function App() {
 
     if (postError) {
       console.error('Error loading posts', postError)
+      setFetchError(postError.message || 'Unable to load posts')
       setLoading(false)
       return
     }
@@ -52,6 +61,7 @@ function App() {
 
     if (commentError) {
       console.error('Error loading comments', commentError)
+      setFetchError(commentError.message || 'Unable to load comments')
     }
 
     const grouped = {}
@@ -63,7 +73,7 @@ function App() {
     setPosts(postRows ?? [])
     setComments(grouped)
     setLoading(false)
-  }, [])
+  }, [user])
 
   useEffect(() => {
     const loadSession = async () => {
@@ -292,10 +302,14 @@ function App() {
       <section className="panel">
         <div className="section-head">
           <h2>Threads</h2>
-          {loading && <span className="pill muted">Loading…</span>}
+          {loading && user && <span className="pill muted">Loading…</span>}
         </div>
 
-        {!loading && sortedPosts.length === 0 ? (
+        {!user ? (
+          <p className="muted">Sign in to view and join threads.</p>
+        ) : fetchError ? (
+          <p className="error">{fetchError}</p>
+        ) : !loading && sortedPosts.length === 0 ? (
           <p className="muted">No posts yet. Start the conversation above.</p>
         ) : (
           <div className="stack">
