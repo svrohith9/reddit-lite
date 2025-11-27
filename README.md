@@ -11,8 +11,8 @@ npm run dev
 
 ## Supabase setup (auth + data)
 1) Create a Supabase project and grab the anon key + URL (paste into `.env`).
-2) Run `supabase.sql` in the SQL editor to create tables (posts/comments), add user columns, enable RLS, and enforce authenticated read + insert policies (no anonymous reads).
-3) Test locally (`npm run dev`), sign up/sign in with email/password, then create a post/comment.
+2) Run `supabase.sql` in the SQL editor to create tables (sub_forums, posts, comments), add user/subforum columns, enable RLS, and enforce authenticated read + insert policies (no anonymous reads).
+3) Test locally (`npm run dev`), sign up/sign in with email/password, then create a subforum, post, and comment.
 
 ## Deploy to GitHub Pages
 ```bash
@@ -27,4 +27,4 @@ npm run deploy  # pushes dist to gh-pages
 
 ## Notes
 - `.env` is ignored; keep your anon key out of git.
-- If you prefer stricter access, replace the permissive RLS policies with auth-aware checks.
+- Auth is required for all reads/writes (threads hidden when logged out).
