@@ -310,6 +310,73 @@ function App() {
 
       <section className="panel">
         <div className="section-head">
+          <h2>{user ? 'Account' : 'Sign in or create account'}</h2>
+          {user && (
+            <button className="secondary" onClick={signOut}>
+              Sign out
+            </button>
+          )}
+        </div>
+
+        {!user ? (
+          <div className="auth-grid">
+            <div className="auth-tabs">
+              <button
+                className={authMode === 'signup' ? 'active' : ''}
+                onClick={() => setAuthMode('signup')}
+              >
+                Email sign up
+              </button>
+              <button
+                className={authMode === 'signin' ? 'active' : ''}
+                onClick={() => setAuthMode('signin')}
+              >
+                Email sign in
+              </button>
+            </div>
+            <div className="form-grid">
+              <label className="field">
+                <span>Email</span>
+                <input
+                  type="email"
+                  value={authForm.email}
+                  onChange={(e) => setAuthForm((prev) => ({ ...prev, email: e.target.value }))}
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                />
+              </label>
+              <label className="field">
+                <span>Password</span>
+                <input
+                  type="password"
+                  value={authForm.password}
+                  onChange={(e) => setAuthForm((prev) => ({ ...prev, password: e.target.value }))}
+                  placeholder="••••••••"
+                  autoComplete={authMode === 'signup' ? 'new-password' : 'current-password'}
+                />
+              </label>
+            </div>
+            <button className="primary" onClick={handleEmailAuth} disabled={authLoading}>
+              {authLoading
+                ? 'Working…'
+                : authMode === 'signup'
+                  ? 'Create account'
+                  : 'Sign in'}
+            </button>
+            {authError && <p className="error">{authError}</p>}
+          </div>
+        ) : (
+          <div className="auth-grid">
+            <p className="muted">
+              Signed in as <strong>{user.email || user.id}</strong>. You can create subforums, post,
+              and comment.
+            </p>
+          </div>
+        )}
+      </section>
+
+      <section className="panel">
+        <div className="section-head">
           <h2>Subforums</h2>
           {user && (
             <button className="secondary" onClick={loadSubforums}>
