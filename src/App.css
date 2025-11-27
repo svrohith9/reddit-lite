@@ -203,6 +203,21 @@
   gap: 6px;
 }
 
+.comment textarea {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 8px;
+  font: inherit;
+}
+
+.post-actions,
+.comment-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .comment-form {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -245,6 +260,11 @@
   border-radius: 10px;
   padding: 8px 12px;
   cursor: pointer;
+}
+
+.secondary.danger {
+  border-color: #fca5a5;
+  color: #b91c1c;
 }
 
 .wide {

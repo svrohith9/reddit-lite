@@ -33,6 +33,10 @@ function App() {
   const [fetchError, setFetchError] = useState('')
   const [subforumError, setSubforumError] = useState('')
   const [search, setSearch] = useState('')
+  const [editingPostId, setEditingPostId] = useState('')
+  const [editingPostDraft, setEditingPostDraft] = useState({ title: '', body: '' })
+  const [editingCommentId, setEditingCommentId] = useState('')
+  const [editingCommentDraft, setEditingCommentDraft] = useState('')
 
   const sortedPosts = useMemo(
     () => [...posts].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)),
@@ -205,6 +209,114 @@ function App() {
       setCommentError((prev) => ({ ...prev, [postId]: '' }))
     }
     setSavingComment((prev) => ({ ...prev, [postId]: false }))
+  }
+
+  const startEditPost = (post) => {
+    setEditingPostId(post.id)
+    setEditingPostDraft({ title: post.title, body: post.body || '' })
+    setPostError('')
+  }
+
+  const updatePost = async () => {
+    if (!editingPostId || !editingPostDraft.title.trim()) return
+    setSavingPost(true)
+    setPostError('')
+    const { data, error } = await supabase
+      .from('posts')
+      .update({ title: editingPostDraft.title, body: editingPostDraft.body })
+      .eq('id', editingPostId)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error updating post', error)
+      setPostError(error.message || 'Unable to update post')
+    } else if (data) {
+      setPosts((prev) => prev.map((p) => (p.id === data.id ? data : p)))
+      setEditingPostId('')
+      setEditingPostDraft({ title: '', body: '' })
+    }
+    setSavingPost(false)
+  }
+
+  const deletePost = async (postId) => {
+    if (!postId) return
+    const { error } = await supabase.from('posts').delete().eq('id', postId)
+    if (error) {
+      console.error('Error deleting post', error)
+      setPostError(error.message || 'Unable to delete post')
+    } else {
+      setPosts((prev) => prev.filter((p) => p.id !== postId))
+      setComments((prev) => {
+        const updated = { ...prev }
+        delete updated[postId]
+        return updated
+      })
+      if (editingPostId === postId) {
+        setEditingPostId('')
+        setEditingPostDraft({ title: '', body: '' })
+      }
+    }
+  }
+
+  const startEditComment = (comment) => {
+    setEditingCommentId(comment.id)
+    setEditingCommentDraft(comment.body || '')
+    setCommentError((prev) => ({ ...prev, [comment.post_id]: '' }))
+  }
+
+  const updateComment = async (comment) => {
+    if (!comment || !editingCommentDraft.trim()) return
+    setSavingComment((prev) => ({ ...prev, [comment.post_id]: true }))
+    setCommentError((prev) => ({ ...prev, [comment.post_id]: '' }))
+    const { data, error } = await supabase
+      .from('comments')
+      .update({ body: editingCommentDraft })
+      .eq('id', comment.id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error updating comment', error)
+      setCommentError((prev) => ({
+        ...prev,
+        [comment.post_id]: error.message || 'Unable to update comment',
+      }))
+    } else if (data) {
+      setComments((prev) => ({
+        ...prev,
+        [comment.post_id]: (prev[comment.post_id] || []).map((c) =>
+          c.id === data.id ? data : c,
+        ),
+      }))
+      setEditingCommentId('')
+      setEditingCommentDraft('')
+    }
+    setSavingComment((prev) => ({ ...prev, [comment.post_id]: false }))
+  }
+
+  const deleteComment = async (comment) => {
+    if (!comment) return
+    setSavingComment((prev) => ({ ...prev, [comment.post_id]: true }))
+    setCommentError((prev) => ({ ...prev, [comment.post_id]: '' }))
+    const { error } = await supabase.from('comments').delete().eq('id', comment.id)
+    if (error) {
+      console.error('Error deleting comment', error)
+      setCommentError((prev) => ({
+        ...prev,
+        [comment.post_id]: error.message || 'Unable to delete comment',
+      }))
+    } else {
+      setComments((prev) => ({
+        ...prev,
+        [comment.post_id]: (prev[comment.post_id] || []).filter((c) => c.id !== comment.id),
+      }))
+      if (editingCommentId === comment.id) {
+        setEditingCommentId('')
+        setEditingCommentDraft('')
+      }
+    }
+    setSavingComment((prev) => ({ ...prev, [comment.post_id]: false }))
   }
 
   const handleEmailAuth = async () => {
@@ -497,19 +609,117 @@ function App() {
                     </p>
                     <h3>{post.title}</h3>
                   </div>
+                  {user?.id === post.user_id && (
+                    <div className="post-actions">
+                      {editingPostId === post.id ? (
+                        <>
+                          <button className="secondary" onClick={() => setEditingPostId('')}>
+                            Cancel
+                          </button>
+                          <button className="primary" onClick={updatePost} disabled={savingPost}>
+                            {savingPost ? 'Saving…' : 'Save'}
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button className="secondary" onClick={() => startEditPost(post)}>
+                            Edit
+                          </button>
+                          <button className="secondary danger" onClick={() => deletePost(post.id)}>
+                            Delete
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
-                {post.body && <p className="body">{post.body}</p>}
+                {editingPostId === post.id ? (
+                  <div className="form-grid">
+                    <label className="field">
+                      <span>Title</span>
+                      <input
+                        value={editingPostDraft.title}
+                        onChange={(e) =>
+                          setEditingPostDraft((prev) => ({ ...prev, title: e.target.value }))
+                        }
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Body</span>
+                      <textarea
+                        rows={3}
+                        value={editingPostDraft.body}
+                        onChange={(e) =>
+                          setEditingPostDraft((prev) => ({ ...prev, body: e.target.value }))
+                        }
+                      />
+                    </label>
+                  </div>
+                ) : (
+                  post.body && <p className="body">{post.body}</p>
+                )}
 
                 <div className="comments">
                   <p className="eyebrow">Comments</p>
                   <div className="comment-stack">
                     {(comments[post.id] || []).map((comment) => (
                       <div key={comment.id} className="comment">
-                        <p>{comment.body}</p>
+                        {editingCommentId === comment.id ? (
+                          <textarea
+                            rows={2}
+                            value={editingCommentDraft}
+                            onChange={(e) => setEditingCommentDraft(e.target.value)}
+                          />
+                        ) : (
+                          <p>{comment.body}</p>
+                        )}
                         <span className="muted">
                           {comment.user_email ? `${displayName(comment.user_email)} • ` : ''}
                           {formatDate(comment.created_at)}
+                          {comment.updated_at && comment.updated_at !== comment.created_at
+                            ? ' • edited'
+                            : ''}
                         </span>
+                        {user?.id === comment.user_id && (
+                          <div className="comment-actions">
+                            {editingCommentId === comment.id ? (
+                              <>
+                                <button
+                                  className="secondary"
+                                  onClick={() => {
+                                    setEditingCommentId('')
+                                    setEditingCommentDraft('')
+                                  }}
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  className="primary"
+                                  onClick={() => updateComment(comment)}
+                                  disabled={savingComment[comment.post_id]}
+                                >
+                                  {savingComment[comment.post_id] ? 'Saving…' : 'Save'}
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  className="secondary"
+                                  onClick={() => startEditComment(comment)}
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  className="secondary danger"
+                                  onClick={() => deleteComment(comment)}
+                                  disabled={savingComment[comment.post_id]}
+                                >
+                                  Delete
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))}
                     {(comments[post.id] || []).length === 0 && (
